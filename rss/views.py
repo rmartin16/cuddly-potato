@@ -22,13 +22,14 @@ class PodcastFeed(Rss201rev2Feed):
 
     def add_root_elements(self, handler):
         super().add_root_elements(handler)
+        handler.addQuickElement('itunes:image', attrs={'href': self.feed['image']})
 
     def add_item_elements(self, handler, item):
         super().add_item_elements(handler, item)
         handler.addQuickElement('itunes:duration', item['duration'])
 
 
-class PodcastFeed(Feed):
+class PodcastFeedView(Feed):
     feed_type = PodcastFeed
 
     def get_object(self, request, show_abbrev: str):
@@ -46,6 +47,15 @@ class PodcastFeed(Feed):
     def items(self, podcast: Podcast):
         return PodcastEpisode.objects.filter(podcast=podcast).order_by('-pub_date')[:25]
 
+    def feed_extra_kwargs(self, podcast: Podcast):
+        try:
+            image_path = reverse('podcast-art', args=(podcast.abbreviation,))
+            image_url = absolute_url(path=image_path)
+        except Exception as e:
+            print(f'Error: {repr(e)}')
+            image_url = ''
+        return {'image': image_url}
+
     def item_title(self, episode: PodcastEpisode):
         return episode.title
 
@@ -59,28 +69,36 @@ class PodcastFeed(Feed):
         return reverse('podcast-episode', args=(episode.podcast.abbreviation, episode.uuid))
 
     def item_enclosure_url(self, episode: PodcastEpisode):
-        domain = Site.objects.get_current().domain
-        return ''.join(
-            ['http://', domain, reverse('podcast-episode', args=(episode.podcast.abbreviation, episode.uuid))]
-        )
+        return absolute_url(path=reverse('podcast-episode', args=(episode.podcast.abbreviation, episode.uuid)))
 
     def item_enclosure_length(self, episode: PodcastEpisode):
         return os.path.getsize(episode.media)
 
-    def item_extra_kwargs(self, item: PodcastEpisode):
+    def item_extra_kwargs(self, episode: PodcastEpisode):
         try:
-            duration = str(datetime.timedelta(seconds=round(MP3(item.media).info.length)))
+            duration = str(datetime.timedelta(seconds=round(MP3(episode.media).info.length)))
         except Exception as e:
             print('Failed to determine episode length')
-            print(f' Episode: {item.title}')
+            print(f' Episode: {episode.title}')
             print(f' Error: {repr(e)}')
             duration = 0
         return {'duration': duration}
 
-    item_enclosure_mime_type = "audio/mpeg"
+    item_enclosure_mime_type = 'audio/mpeg'
+
+
+def absolute_url(path):
+    domain = Site.objects.get_current().domain
+    return ''.join(['http://', domain, path])
 
 
 def episode_file(request, show_abbrev: str, episode_uuid: int):
     episode: PodcastEpisode = get_object_or_404(PodcastEpisode, uuid=episode_uuid)
     filepath = episode.media
+    return serve(request, os.path.basename(filepath), os.path.dirname(filepath))
+
+
+def podcast_art(request, show_abbrev):
+    podcast: Podcast = get_object_or_404(Podcast, abbreviation=show_abbrev)
+    filepath = podcast.cover_art
     return serve(request, os.path.basename(filepath), os.path.dirname(filepath))
