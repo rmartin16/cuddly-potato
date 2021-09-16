@@ -11,10 +11,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from pathlib import Path
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -23,14 +23,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '#yvsb76a^5a)1p&#=un9k_!+l%a3ymd)pvyww1niolm*^0h$#s'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = ['g.rjm.li', 'x.rjm.li']
-
-SITE_ID = 5
+DEBUG = True
+SITE_ID = 1
+BASE_PODCAST_DIR = Path(os.environ.get('BASE_PODCAST_DIR', '/data')) / 'podcast-assets'
+IMAGES_DIR = BASE_PODCAST_DIR / 'images'
+EPISODES_DIR = BASE_PODCAST_DIR / 'episodes'
+DB_PATH = BASE_PODCAST_DIR / 'podcasts.sqlite3'
+ALLOWED_HOSTS = [e.strip() for e in os.environ.get('ALLOWED_HOSTS', '').split(',')] or ['localhost']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -79,7 +80,7 @@ WSGI_APPLICATION = 'feeder.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': str(DB_PATH),
     }
 }
 
@@ -122,4 +123,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-# STATICFILES_DIRS = ( os.path.join('static'), )
+#STATICFILES_DIRS = ( os.path.join('static'), )
