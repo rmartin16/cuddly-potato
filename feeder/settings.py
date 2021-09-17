@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '#yvsb76a^5a)1p&#=un9k_!+l%a3ymd)pvyww1niolm*^0h$#s'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 SITE_ID = 1
 BASE_PODCAST_DIR = Path(os.environ.get('BASE_PODCAST_DIR', '/data')) / 'podcast-assets'
 IMAGES_DIR = BASE_PODCAST_DIR / 'images'
